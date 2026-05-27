@@ -49,6 +49,45 @@ class PedidoControlador {
 
     }
 
+
+async listarPedidos(req, res) {
+
+    try {
+
+        const pedidos = await modelo.listarPedidos();
+
+        return res.json(pedidos);
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            ok: false,
+            msg: "Error al listar pedidos"
+        });
+    }
 }
 
+async detallePedido(req, res) {
+
+    try {
+
+        const { id } = req.params;
+
+        const data = await modelo.detallePedido(id);
+
+        return res.json(data);
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            ok: false,
+            msg: "Error al obtener detalle"
+        });
+    }
+}
+}
 module.exports = new PedidoControlador();
