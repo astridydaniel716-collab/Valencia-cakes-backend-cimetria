@@ -14,4 +14,6 @@ routes.put('/editar/:id', (req, res) => pedido.editarPedido(req, res));
 
 routes.delete('/eliminar/:id', (req, res) => pedido.eliminarPedido(req, res));
 
+routes.post('/manual', (req, res) => pedido.crearPedidoManual(req, res));
+
 module.exports = routes;

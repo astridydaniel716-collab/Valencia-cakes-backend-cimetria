@@ -118,6 +118,86 @@ async editarPedido(req, res) {
         }
     }
 
+    async crearPedidoManual(req, res) {
+
+    try {
+
+        const {
+            idusuario,
+            estado,
+            fecha_entrega,
+            hora_entrega,
+            abono,
+            metodo_entrega,
+            direccion,
+            observaciones,
+            detalles
+        } = req.body;
+
+        // VALIDACIÓN BÁSICA
+        if (
+            !idusuario ||
+            !detalles ||
+            !Array.isArray(detalles) ||
+            detalles.length === 0
+        ) {
+            return res.status(400).json({
+                ok: false,
+                msg: "Datos incompletos para pedido manual",
+                recibido: req.body
+            });
+        }
+
+        // CREAR PEDIDO (primero sin total real)
+        const pedido = await modelo.crearPedidoManualBase({
+            idusuario,
+            estado,
+            fecha_entrega,
+            hora_entrega,
+            abono,
+            metodo_entrega,
+            direccion,
+            observaciones
+        });
+
+        // CREAR DETALLES + CALCULAR TOTAL
+        let total = 0;
+
+        for (const item of detalles) {
+
+            const subtotal = Number(item.precio) * Number(item.cantidad);
+            total += subtotal;
+
+            await modelo.crearDetallePedido({
+                idpedido: pedido.idpedido,
+                producto: item.producto,
+                precio: item.precio,
+                cantidad: item.cantidad,
+                subtotal
+            });
+        }
+
+        // ACTUALIZAR TOTAL FINAL
+        await modelo.actualizarTotalPedido(pedido.idpedido, total, abono || 0);
+
+        return res.status(201).json({
+            ok: true,
+            msg: "Pedido manual creado correctamente",
+            pedido_id: pedido.idpedido,
+            total
+        });
+
+    } catch (error) {
+
+        console.error("ERROR crearPedidoManual:", error);
+
+        return res.status(500).json({
+            ok: false,
+            msg: "Error al crear pedido manual"
+        });
+    }
+}
+
 async eliminarPedido(req, res) {
         const { id } = req.params;
 

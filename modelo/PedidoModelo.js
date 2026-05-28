@@ -232,5 +232,64 @@ async editarPedido(id, pedido) {
 
 }
 
+async crearPedidoManualBase(data) {
+
+    const query = `
+        INSERT INTO pedidos(
+            total,
+            idusuario,
+            estado,
+            fecha_entrega,
+            hora_entrega,
+            abono,
+            saldo,
+            metodo_entrega,
+            direccion,
+            observaciones
+        )
+        VALUES(
+            0,
+            $1,$2,$3,$4,$5,$6,$7,$8,$9
+        )
+        RETURNING *
+    `;
+
+    const values = [
+        data.idusuario,
+        data.estado || 'pendiente',
+        data.fecha_entrega || null,
+        data.hora_entrega || null,
+        data.abono || 0,
+        data.abono || 0, // 👈 saldo inicial igual a abono (temporal)
+        data.metodo_entrega || null,
+        data.direccion || null,
+        data.observaciones || null
+    ];
+
+    const result = await Conexion.query(query, values);
+
+    return result.rows[0];
+}
+
+async actualizarTotalPedido(idpedido, total, abono = 0) {
+
+    const query = `
+        UPDATE pedidos
+        SET total = $1,
+            saldo = $2
+        WHERE idpedido = $3
+        RETURNING *
+    `;
+
+    const saldo = total - Number(abono || 0);
+
+    const result = await Conexion.query(query, [
+        total,
+        saldo,
+        idpedido
+    ]);
+
+    return result.rows[0];
+}
 }
 module.exports = new PedidoModelo();
