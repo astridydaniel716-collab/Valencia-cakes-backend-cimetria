@@ -103,16 +103,134 @@ async eliminarPedido(id) {
 }
 
 async editarPedido(id, pedido) {
-        try {
-            const query = 'UPDATE pedidos SET estado = $1, fecha_entrega = $2, hora_entrega = $3, abono = $4, metodo_entrega = $5, direccion = $6, observaciones = $7  WHERE idpedido = $8 RETURNING *';
-            const values = [pedido.estado, pedido.fecha_entrega, pedido.hora_entrega, pedido.abono, pedido.metodo_entrega, pedido.direccion, pedido.observaciones, id];
-            const result = await Conexion.query(query, values);
-            return result.rows[0];
-        } catch (error) {
-            console.error('Error al editar producto:', error);
-            throw error;
-        }    
+
+    try {
+
+        // =========================
+        // CALCULAR TOTAL
+        // =========================
+
+        const total = pedido.detalles.reduce((acc, item) => {
+
+            return acc + Number(item.subtotal);
+
+        }, 0);
+
+        // =========================
+        // ACTUALIZAR PEDIDO
+        // =========================
+
+        const queryPedido = `
+            UPDATE pedidos
+            SET
+                total = $1,
+                estado = $2,
+                fecha_entrega = $3,
+                hora_entrega = $4,
+                abono = $5,
+                saldo = $6,
+                metodo_entrega = $7,
+                direccion = $8,
+                observaciones = $9
+            WHERE idpedido = $10
+            RETURNING *
+        `;
+
+        const valuesPedido = [
+
+            total,
+
+            pedido.estado,
+
+            pedido.fecha_entrega,
+
+            pedido.hora_entrega,
+
+            pedido.abono,
+
+            total - Number(pedido.abono || 0),
+
+            pedido.metodo_entrega,
+
+            pedido.direccion,
+
+            pedido.observaciones,
+
+            id
+
+        ];
+
+        const resultPedido =
+            await Conexion.query(
+                queryPedido,
+                valuesPedido
+            );
+
+        // =========================
+        // ELIMINAR DETALLES VIEJOS
+        // =========================
+
+        await Conexion.query(
+            `
+            DELETE FROM detalle_pedido
+            WHERE idpedido = $1
+            `,
+            [id]
+        );
+
+        // =========================
+        // INSERTAR NUEVOS DETALLES
+        // =========================
+
+        for (const item of pedido.detalles) {
+
+            await Conexion.query(
+
+                `
+                INSERT INTO detalle_pedido(
+
+                    idpedido,
+                    producto,
+                    precio,
+                    cantidad,
+                    subtotal
+
+                )
+                VALUES($1,$2,$3,$4,$5)
+                `,
+
+                [
+
+                    id,
+
+                    item.producto,
+
+                    item.precio,
+
+                    item.cantidad,
+
+                    item.subtotal
+
+                ]
+
+            );
+
+        }
+
+        return resultPedido.rows[0];
+
+    } catch (error) {
+
+        console.error(
+            'Error al editar pedido:',
+            error
+        );
+
+        throw error;
 
     }
+
+}
+
 }
 module.exports = new PedidoModelo();
