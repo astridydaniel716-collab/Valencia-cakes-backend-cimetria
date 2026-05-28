@@ -89,5 +89,60 @@ async detallePedido(req, res) {
         });
     }
 }
+
+async editarPedido(req, res) {
+        const { id } = req.params;
+        const pedido = req.body;
+
+        try {
+            const pedidoEditado = await modelo.editarPedido(id, pedido);
+
+            if (!pedidoEditado) {
+                return res.status(404).json({
+                    ok: false,
+                    msg: 'Pedido no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                ok: true,
+                msg: 'Pedido editado correctamente',
+                data: pedidoEditado
+            });
+        } catch (error) {
+            console.error('Error en PedidoControlador.editarPedido:', error);
+            return res.status(500).json({
+                ok: false,
+                msg: 'Error interno del servidor al editar pedido'
+            });
+        }
+    }
+
+async eliminarPedido(req, res) {
+        const { id } = req.params;
+
+        try {
+            const pedidoEliminado = await modelo.eliminarPedido(id);
+
+            if (!pedidoEliminado) {
+                return res.status(404).json({
+                    ok: false,
+                    msg: 'Pedido no encontrado'
+                });
+            }
+
+            return res.status(200).json({
+                ok: true,
+                msg: 'Pedido eliminado correctamente',
+                data: pedidoEliminado
+            });
+        } catch (error) {
+            console.error('Error en PedidoControlador.eliminarPedido:', error);
+            return res.status(500).json({
+                ok: false,
+                msg: 'Error interno del servidor al eliminar pedido'
+            });
+        }
+    }
 }
 module.exports = new PedidoControlador();

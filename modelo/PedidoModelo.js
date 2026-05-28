@@ -2,7 +2,7 @@ const Conexion = require('./bd/Conexion');
 
 class PedidoModelo {
 
-    async crearPedido(total, idusuario) {
+     async crearPedido(total, idusuario) {
 
         const query = `
             INSERT INTO pedidos(total, idusuario)
@@ -90,6 +90,29 @@ async detallePedido(idpedido) {
         detalles: detalles.rows
     };
 }
+
+
+async eliminarPedido(id) {
+        try {
+            const query = 'DELETE FROM pedidos WHERE idpedido = $1 RETURNING *';
+            const result = await Conexion.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error al eliminar pedido:', error);
+        }
 }
 
+async editarPedido(id, pedido) {
+        try {
+            const query = 'UPDATE pedidos SET estado = $1, fecha_entrega = $2, hora_entrega = $3, abono = $4, metodo_entrega = $5, direccion = $6, observaciones = $7  WHERE idpedido = $8 RETURNING *';
+            const values = [pedido.estado, pedido.fecha_entrega, pedido.hora_entrega, pedido.abono, pedido.metodo_entrega, pedido.direccion, pedido.observaciones, id];
+            const result = await Conexion.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error al editar producto:', error);
+            throw error;
+        }    
+
+    }
+}
 module.exports = new PedidoModelo();

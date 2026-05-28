@@ -10,4 +10,8 @@ routes.get('/pedidos', (req, res) => pedido.listarPedidos(req, res));
 
 routes.get('/:id', (req, res) => pedido.detallePedido(req, res));
 
+routes.put('/editar/:id', (req, res) => pedido.editarPedido(req, res));
+
+routes.delete('/eliminar/:id', (req, res) => pedido.eliminarPedido(req, res));
+
 module.exports = routes;
